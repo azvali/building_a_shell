@@ -7,12 +7,14 @@
 #include <signal.h>
 #include <termios.h> 
 
-#define max_length 1024
-#define max_processes 10
+#define max_length 1024 // Define maximum input length
+#define max_processes 10 // Define maximum number of processes
 
-int scheduler_type = 0; 
-int quantum = 1; 
+// Global variables for scheduler type and quantum time
+int scheduler_type = 0; // 0 for FCFS, 1 for Round Robin
+int quantum = 1; // Quantum time for Round Robin scheduling
 
+// Define process states
 typedef enum {
     READY,
     RUNNING,
@@ -20,16 +22,18 @@ typedef enum {
     TERMINATED
 } process_state_t;
 
+// Define process structure
 typedef struct {
-    pid_t pid;
-    int process_number;
-    process_state_t state;
+    pid_t pid; // Process ID
+    int process_number; // Custom process number for identification
+    process_state_t state; // Current state of the process
 } process_t;
 
-process_t processes[max_processes];
-int process_count = 0;
-int current_running_process = -1; 
+process_t processes[max_processes]; // Array to store processes
+int process_count = 0; // Counter for the number of processes
+int current_running_process = -1; // Index of the currently running process
 
+// Function to initialize process array
 void initialize_processes() {
     for (int i = 0; i < max_processes; i++) {
         processes[i].pid = -1;
@@ -38,6 +42,7 @@ void initialize_processes() {
     }
 }
 
+// Signal handler for SIGINT to suspend the current running process
 void handle_sigint(int sig) {
     if (current_running_process != -1) {
         kill(processes[current_running_process].pid, SIGSTOP);
@@ -47,6 +52,7 @@ void handle_sigint(int sig) {
     }
 }
 
+// Function to update process states for FCFS scheduling
 void update_process_states_for_fcfs() {
     for (int i = 0; i < process_count; i++) {
         if (processes[i].state == READY) {
@@ -59,7 +65,7 @@ void update_process_states_for_fcfs() {
     }
 }
 
-
+// Function to create a specified number of processes
 void create(int n) {
     char *args[] = {"./task", NULL};
     for (int i = 0; i < n; i++) {
@@ -86,7 +92,7 @@ void create(int n) {
     }
 }
 
-
+// Function to terminate a specific process by process number
 void end(int process_number) {
     for (int i = 0; i < process_count; i++) {
         if (processes[i].process_number == process_number) {
@@ -96,7 +102,7 @@ void end(int process_number) {
                 processes[i].state = TERMINATED;
                 printf("Process %d killed.\n", process_number);
                 if (i == current_running_process) {
-                    current_running_process = -1;
+                    current_running_process = -1; // Reset the current running process
                 }
             } else {
                 printf("Process %d is already terminated.\n", process_number);
@@ -104,9 +110,9 @@ void end(int process_number) {
             return;
         }
     }
-    printf("Process %d not found.\n", process_number);
+    printf("Process %d not found.\n", process_number); // If process number not found
 }
-
+// Function to list all processes and their states
 void list() {
     printf("PID\tProcess Number\tState\n");
     for (int i = 0; i < process_count; i++) {
@@ -118,12 +124,13 @@ void list() {
             case TERMINATED: state_str = "Terminated"; break;
             default: state_str = "Unknown"; break;
         }
-        printf("%d\t%d\t\t%s\n", processes[i].pid, processes[i].process_number, state_str);
+        printf("%d\t%d\t\t%s\n", processes[i].pid, processes[i].process_number, state_str); // Print process info
     }
 }
 
+// Handler for Round Robin scheduling
 void round_robin_handler(int sig) {
-    if (scheduler_type != 1) return; 
+    if (scheduler_type != 1) return; // Only execute for Round Robin scheduling
 
     int previous_process = current_running_process;
     if (previous_process != -1 && processes[previous_process].state == RUNNING) {
@@ -131,6 +138,7 @@ void round_robin_handler(int sig) {
         processes[previous_process].state = SUSPENDED;
     }
 
+    // Find the next process to run
     int found = 0;
     for (int attempts = 0; attempts < process_count; attempts++) {
         current_running_process = (current_running_process + 1) % process_count;
@@ -143,32 +151,34 @@ void round_robin_handler(int sig) {
     }
 
     if (!found) {
-        current_running_process = -1;
+        current_running_process = -1; // No suitable process found
     }
 
-    alarm(quantum);
+    alarm(quantum); // Set up the alarm for the next quantum
 }
 
+// Function to set scheduler to Round Robin and specify quantum
 void set_scheduler_round_robin(int q) {
-    scheduler_type = 1; 
-    quantum = q;
+    scheduler_type = 1; // Set scheduler type to Round Robin
+    quantum = q; // Set quantum time
     printf("Round Robin scheduling selected with a quantum of %d seconds.\n", quantum);
-    signal(SIGALRM, round_robin_handler);
-    alarm(quantum); 
+    signal(SIGALRM, round_robin_handler); // Set signal handler for alarm
+    alarm(quantum); // Start the Round Robin scheduling
 }
 
+// Function to set scheduler to First-Come, First-Served
 void set_scheduler_fcfs() {
-    scheduler_type = 0; 
+    scheduler_type = 0; // Set scheduler type to FCFS
     printf("Setting scheduler to FCFS.\n");
-    alarm(0); 
-    update_process_states_for_fcfs(); 
+    alarm(0); // Cancel any existing alarms
+    update_process_states_for_fcfs(); // Update process states for FCFS
 }
 
-
+// Function to resume a specific suspended process
 void resume(int process_number) {
     for (int i = 0; i < process_count; i++) {
         if (processes[i].process_number == process_number && processes[i].state == SUSPENDED) {
-            kill(processes[i].pid, SIGCONT);
+            kill(processes[i].pid, SIGCONT); // Send SIGCONT to resume the process
             processes[i].state = READY;
             printf("Process %d resumed.\n", process_number);
             return;
@@ -177,11 +187,12 @@ void resume(int process_number) {
     printf("Process %d not found or not in a suspended state.\n", process_number);
 }
 
+// Function to resume all suspended processes
 void resume_all() {
     int resumed_count = 0;
     for (int i = 0; i < process_count; i++) {
         if (processes[i].state == SUSPENDED) {
-            kill(processes[i].pid, SIGCONT);
+            kill(processes[i].pid, SIGCONT); // Send SIGCONT to resume each suspended process
             processes[i].state = READY;
             resumed_count++;
             printf("Process %d resumed.\n", processes[i].process_number); 
@@ -194,22 +205,25 @@ void resume_all() {
     }
 }
 
+// Main function to handle input and execute commands
 int main() {
     char *buffer = NULL;
     size_t size = 0;
     ssize_t read_size;
 
+    // Set up signal handlers
     signal(SIGINT, handle_sigint);
     initialize_processes();
     signal(SIGALRM, round_robin_handler);
 
+    // Main loop to process input commands
     while(1) {
         printf("shell 5500>>>");
         fflush(stdout);
-        read_size = getline(&buffer, &size, stdin);
+        read_size = getline(&buffer, &size, stdin); // Read input from user
 
         if (read_size <= 0) {
-            if (feof(stdin)) {
+            if (feof(stdin)) { // Check for end-of-file
                 printf("\nExiting shell.\n");
                 break;
             }
@@ -217,41 +231,42 @@ int main() {
             continue;
         }
 
-        buffer[read_size - 1] = '\0'; 
+        buffer[read_size - 1] = '\0'; // Remove newline character
 
+        // Process commands
         if (strcmp(buffer, "x") == 0) {
             printf("Exiting and terminating all processes.\n");
             for (int i = 0; i < process_count; i++) {
                 if (processes[i].state != TERMINATED) {
-                    kill(processes[i].pid, SIGKILL);
+                    kill(processes[i].pid, SIGKILL); // Terminate each process
                 }
             }
-            break;
+            break; // Exit the main loop
         } else if (strncmp(buffer, "c ", 2) == 0) {
             int n = atoi(buffer + 2);
-            create(n);
+            create(n); // Create n processes
         } else if (strcmp(buffer, "l") == 0) {
-            list();
+            list(); // List all processes
         } else if (strncmp(buffer, "s rr ", 5) == 0) {
             int quantum = atoi(buffer + 5);
-            set_scheduler_round_robin(quantum);
+            set_scheduler_round_robin(quantum); // Set scheduler to Round Robin
         } else if (strcmp(buffer, "s fcfs") == 0) {
-            set_scheduler_fcfs();
+            set_scheduler_fcfs(); // Set scheduler to FCFS
         } else if (strncmp(buffer, "k ", 2) == 0) {
             int process_number = atoi(buffer + 2);
-            end(process_number);
+            end(process_number); // Terminate a specific process
         } else if (strncmp(buffer, "r ", 2) == 0) {
             if (strcmp(buffer + 2, "all") == 0) {
-                resume_all();
+                resume_all(); // Resume all suspended processes
             } else {
                 int process_number = atoi(buffer + 2);
-                resume(process_number);
+                resume(process_number); // Resume a specific process
             }
         } else {
-            printf("Command not recognized.\n");
+            printf("Command not recognized.\n"); // Handle unknown command
         }
     }
 
-    free(buffer);
-    return 0;
+    free(buffer); // Free allocated memory for input buffer
+    return 0; // Exit program
 }
