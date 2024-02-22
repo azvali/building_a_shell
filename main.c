@@ -7,8 +7,8 @@
 #include <signal.h>
 #include <termios.h> 
 
-#define MAX_COMMAND_LENGTH 1024
-#define MAX_NUMBER_OF_PROCESSES 10
+#define max_length 1024
+#define max_processes 10
 
 int scheduler_type = 0; 
 int quantum = 1; 
@@ -26,12 +26,12 @@ typedef struct {
     process_state_t state;
 } process_t;
 
-process_t processes[MAX_NUMBER_OF_PROCESSES];
+process_t processes[max_processes];
 int process_count = 0;
 int current_running_process = -1; 
 
 void initialize_processes() {
-    for (int i = 0; i < MAX_NUMBER_OF_PROCESSES; i++) {
+    for (int i = 0; i < max_processes; i++) {
         processes[i].pid = -1;
         processes[i].process_number = -1;
         processes[i].state = TERMINATED;
@@ -60,10 +60,10 @@ void update_process_states_for_fcfs() {
 }
 
 
-void create_processes(int n) {
+void create(int n) {
     char *args[] = {"./task", NULL};
     for (int i = 0; i < n; i++) {
-        if (process_count >= MAX_NUMBER_OF_PROCESSES) {
+        if (process_count >= max_processes) {
             printf("Maximum number of processes reached.\n");
             return;
         }
@@ -87,7 +87,7 @@ void create_processes(int n) {
 }
 
 
-void kill_process(int process_number) {
+void end(int process_number) {
     for (int i = 0; i < process_count; i++) {
         if (processes[i].process_number == process_number) {
             if (processes[i].state != TERMINATED) {
@@ -107,7 +107,7 @@ void kill_process(int process_number) {
     printf("Process %d not found.\n", process_number);
 }
 
-void list_processes() {
+void list() {
     printf("PID\tProcess Number\tState\n");
     for (int i = 0; i < process_count; i++) {
         char *state_str;
@@ -165,7 +165,7 @@ void set_scheduler_fcfs() {
 }
 
 
-void resume_process(int process_number) {
+void resume(int process_number) {
     for (int i = 0; i < process_count; i++) {
         if (processes[i].process_number == process_number && processes[i].state == SUSPENDED) {
             kill(processes[i].pid, SIGCONT);
@@ -177,7 +177,7 @@ void resume_process(int process_number) {
     printf("Process %d not found or not in a suspended state.\n", process_number);
 }
 
-void resume_all_processes() {
+void resume_all() {
     int resumed_count = 0;
     for (int i = 0; i < process_count; i++) {
         if (processes[i].state == SUSPENDED) {
@@ -229,9 +229,9 @@ int main() {
             break;
         } else if (strncmp(buffer, "c ", 2) == 0) {
             int n = atoi(buffer + 2);
-            create_processes(n);
+            create(n);
         } else if (strcmp(buffer, "l") == 0) {
-            list_processes();
+            list();
         } else if (strncmp(buffer, "s rr ", 5) == 0) {
             int quantum = atoi(buffer + 5);
             set_scheduler_round_robin(quantum);
@@ -239,13 +239,13 @@ int main() {
             set_scheduler_fcfs();
         } else if (strncmp(buffer, "k ", 2) == 0) {
             int process_number = atoi(buffer + 2);
-            kill_process(process_number);
+            end(process_number);
         } else if (strncmp(buffer, "r ", 2) == 0) {
             if (strcmp(buffer + 2, "all") == 0) {
-                resume_all_processes();
+                resume_all();
             } else {
                 int process_number = atoi(buffer + 2);
-                resume_process(process_number);
+                resume(process_number);
             }
         } else {
             printf("Command not recognized.\n");
