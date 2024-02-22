@@ -23,4 +23,3 @@ $(TASK_TARGET): task.c
 # Clean up the project by removing executables.
 clean:
 	rm -f $(MAIN_TARGET) $(TASK_TARGET)
-

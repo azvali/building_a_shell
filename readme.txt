@@ -11,27 +11,70 @@ This project implements a simple process scheduler in C, demonstrating basic sch
 
 ## Compilation
 
-To compile the scheduler and task programs manually without using a Makefile, navigate to the project directory and run the following commands:
+To compile the scheduler (`shell`) and the task (`task`) programs, navigate to the project directory where the source files and `Makefile` are located. Use the following command to compile the project:
 
 ```bash
-gcc task.c -o task
-gcc main.c -o shell
+make
 
 
 
-clean build 
 
-rm -f task shell
+Cleaning Build Files
+
+To remove the compiled executables and clean up your project directory, run the following command:
+
+make clean
 
 
-usage 
+Starting the Scheduler
+To start the main scheduler program, execute:
 
 ./shell
 
 
 
 
+ChatGPT
+Yes, updating your README to reflect the use of the Makefile for compiling your project would be beneficial. This will provide clear, concise instructions for anyone who wants to build and run your project, ensuring they use the intended build process. Here's how you can adjust the Compilation and Cleaning Build Files sections of your README to guide users through using the Makefile:
 
+markdown
+Copy code
+# Project Scheduler
+
+## Overview
+
+This project implements a simple process scheduler in C, demonstrating basic scheduling algorithms such as First-Come, First-Served (FCFS) and Round Robin (RR). It comprises a main scheduler program (`shell`) and a simulated task program (`task`) to showcase the scheduling functionality.
+
+## Prerequisites
+
+- GCC (GNU Compiler Collection)
+- Linux or Unix-like operating system
+
+## Compilation
+
+To compile the scheduler (`shell`) and the task (`task`) programs, navigate to the project directory where the source files and `Makefile` are located. Use the following command to compile the project:
+
+```bash
+make
+This command reads the Makefile in the current directory, compiling the source files into two executables named shell and task.
+
+Cleaning Build Files
+
+To remove the compiled executables and clean up your project directory, run the following command:
+
+bash
+Copy code
+make clean
+This uses the clean target specified in the Makefile to remove the shell and task executables, ensuring a clean state for a fresh compile.
+
+Usage
+
+Starting the Scheduler
+To start the main scheduler program, execute:
+
+bash
+Copy code
+./shell
 Scheduler Commands
 The scheduler program accepts several commands for managing processes:
 
@@ -43,8 +86,5 @@ k <process_number>: Terminate a specific process by its process number. Example:
 r <process_number>: Resume a specific suspended process. Example: r 4 resumes process 4.
 r all: Resume all suspended processes.
 x: Exit the scheduler and terminate all running and suspended processes.
-
-
-
 
 
