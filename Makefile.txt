@@ -1,0 +1,38 @@
+# Set the C compiler to gcc.
+CC = gcc
+
+# For the C flags, choose the -Wall option, which enables most warning
+# messages to help catch potential issues in the code.
+CFLAGS = -Wall
+
+# The name of the executable for the main program.
+MAIN_TARGET = scheduler
+
+# The name of the executable for the task program.
+TASK_TARGET = task
+
+# Object files for the main program.
+MAIN_OBJFILES = main.o
+
+# Object files for the task program.
+TASK_OBJFILES = task.o
+
+# Default target: build both the main program and the task program.
+all: $(MAIN_TARGET) $(TASK_TARGET)
+
+# Rule to build the main program.
+$(MAIN_TARGET): $(MAIN_OBJFILES)
+	$(CC) $(CFLAGS) -o $(MAIN_TARGET) $(MAIN_OBJFILES)
+
+# Rule to build the task program.
+$(TASK_TARGET): $(TASK_OBJFILES)
+	$(CC) $(CFLAGS) -o $(TASK_TARGET) $(TASK_OBJFILES)
+
+# Pattern rule for object files.
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean up the project by removing object files and executables.
+clean:
+	rm -f $(MAIN_OBJFILES) $(TASK_OBJFILES) $(MAIN_TARGET) $(TASK_TARGET) *~
+
